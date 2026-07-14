@@ -44,20 +44,50 @@ Three environments, each mapped to a Git branch:
 A GitFlow-inspired model adapted for DevOps, with two permanent branches:
 
 - **`main`** — production. Reflects exactly what runs on the server.
-  **Never committed to directly.**
-- **`dev`** — integration branch. All work lands here first.
+  A **protected branch**: no direct pushes — changes only arrive through a
+  pull request from `dev`.
+- **`dev`** — integration branch. Small changes may be committed here directly;
+  larger features get their own `feature/<name>` branch first.
 
-Feature work branches off `dev` and merges back through a pull request:
+Flow from work to production:
 
 ```
 feature/* ──▶ dev ──▶ main
   (work)   (integrate) (release to server)
 ```
 
-- Create a `feature/<name>` branch from `dev` for each change.
-- Open a pull request into `dev`; once merged, changes are validated on the
-  Development VM.
-- Promote `dev` to `main` to release to production (the home server).
+- For a large feature, branch `feature/<name>` off `dev`, then open a pull
+  request into `dev`.
+- Small changes can go straight onto `dev`.
+- Changes merged into `dev` are validated on the Development VM.
+- To release, open a pull request from `dev` into `main`. Merging it triggers
+  the deployment pipeline to the server.
+
+> **Promotion to `main` is done through a pull request against the remote —
+> never a direct push.**
+
+### Branch protection
+
+Branch protection is enforced on the Git platform (GitHub/GitLab), **not by Git
+itself** — a local clone cannot block a push to `main`. A local `pre-push` hook
+can act as a safety net, but it is not the real barrier. Setting protection up
+requires a remote to be configured first. Order of operations:
+
+1. Create the repository on GitHub/GitLab.
+2. `git remote add origin <url>`, then push `main` and `dev`.
+3. Configure the protection rules on the platform.
+
+Recommended rules for `main` (and usually `dev`):
+
+- **GitHub** — *Settings → Branches → Branch protection rules* (or *Rulesets*):
+  enable "Require a pull request before merging" and "Do not allow bypassing the
+  above settings"; optionally require approvals and green status checks (CI).
+- **GitLab** — *Settings → Repository → Protected branches*: set "Allowed to
+  push" to *No one* and "Allowed to merge" to the appropriate role.
+
+Note: PR merges produce a merge commit (or a squash), not a fast-forward — so in
+the real remote flow you rarely run `git merge --ff-only` by hand; the platform
+handles the merge.
 
 ## Repository structure
 
