@@ -29,6 +29,36 @@ Ansible (infra/)  ──provisions──▶  Ubuntu Server 24 host
                                     Traefik ──▶ SeaweedFS, simple-page, ...
 ```
 
+## Environments & workflow
+
+Three environments, each mapped to a Git branch:
+
+| Environment | Branch | Host | Purpose |
+| --- | --- | --- | --- |
+| Local | `dev` (via `feature/*`) | Your workstation | Development and local testing |
+| Development | `dev` | Development VM | Integration testing before release |
+| Production | `main` | Home server | Live deployment — the server runs what is on `main` |
+
+### Branching strategy
+
+A GitFlow-inspired model adapted for DevOps, with two permanent branches:
+
+- **`main`** — production. Reflects exactly what runs on the server.
+  **Never committed to directly.**
+- **`dev`** — integration branch. All work lands here first.
+
+Feature work branches off `dev` and merges back through a pull request:
+
+```
+feature/* ──▶ dev ──▶ main
+  (work)   (integrate) (release to server)
+```
+
+- Create a `feature/<name>` branch from `dev` for each change.
+- Open a pull request into `dev`; once merged, changes are validated on the
+  Development VM.
+- Promote `dev` to `main` to release to production (the home server).
+
 ## Repository structure
 
 ```
