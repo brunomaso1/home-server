@@ -66,29 +66,6 @@ feature/* ──▶ dev ──▶ main
 > **Promotion to `main` is done through a pull request against the remote —
 > never a direct push.**
 
-### Branch protection
-
-Branch protection is enforced on the Git platform (GitHub/GitLab), **not by Git
-itself** — a local clone cannot block a push to `main`. A local `pre-push` hook
-can act as a safety net, but it is not the real barrier. Setting protection up
-requires a remote to be configured first. Order of operations:
-
-1. Create the repository on GitHub/GitLab.
-2. `git remote add origin <url>`, then push `main` and `dev`.
-3. Configure the protection rules on the platform.
-
-Recommended rules for `main` (and usually `dev`):
-
-- **GitHub** — *Settings → Branches → Branch protection rules* (or *Rulesets*):
-  enable "Require a pull request before merging" and "Do not allow bypassing the
-  above settings"; optionally require approvals and green status checks (CI).
-- **GitLab** — *Settings → Repository → Protected branches*: set "Allowed to
-  push" to *No one* and "Allowed to merge" to the appropriate role.
-
-Note: PR merges produce a merge commit (or a squash), not a fast-forward — so in
-the real remote flow you rarely run `git merge --ff-only` by hand; the platform
-handles the merge.
-
 ## Repository structure
 
 ```
