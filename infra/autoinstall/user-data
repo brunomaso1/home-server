@@ -1,0 +1,56 @@
+#cloud-config
+autoinstall:
+  version: 1
+
+  # Configuración regional
+  locale: en_US.UTF-8
+
+  keyboard:
+    layout: us
+
+  # Configuración de red
+  network:
+    network:
+      version: 2
+      ethernets:
+        enp3s0:
+          dhcp4: true
+
+  # Configuración de disco
+  # El layout 'lvm' borra el disco y crea la estructura estándar.
+  storage:
+    layout:
+      name: lvm
+
+  # Usuario principal
+  identity:
+    hostname: home-server
+    username: maso
+    password: "PASSWORD_ENCRIPTADO_AQUI"
+
+  # Instalación y habilitación de SSH
+  ssh:
+    install-server: true
+    allow-pw: true
+    authorized-keys:
+      - "CLAVE_PUBLICA_DE_MASO"
+
+  # Configuración adicional de cloud-init
+  user-data:
+    users:
+      - name: ansible
+        gecos: Ansible automation user
+        shell: /bin/bash
+        lock_passwd: true
+        groups: []
+        sudo: "ALL=(ALL) NOPASSWD:ALL"
+        ssh_authorized_keys:
+          - "CLAVE_PUBLICA_DEL_USUARIO_ANSIBLE"
+
+    runcmd:
+      - chmod 700 /home/ansible
+      - mkdir -p /home/ansible/.ssh
+      - chown -R ansible:ansible /home/ansible/.ssh
+      - chmod 700 /home/ansible/.ssh
+      - chmod 600 /home/ansible/.ssh/authorized_keys
+      - shutdown -h now
