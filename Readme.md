@@ -6,6 +6,19 @@ Infrastructure and application stacks for a self-hosted home server. A physical 
 
 > **Status:** Under construction. This README documents the target architecture; the directories below are populated incrementally.
 
+## Getting Started
+
+**Prerequisites:**
+
+- A control node with [Ansible](https://docs.ansible.com/) installed.
+- SSH access to the server (Ubuntu Server 24) from the control node.
+- The TerraMaster D2-320 DAS physically connected to the server.
+
+**Bring-up order:**
+
+1. Provision the host — run the Ansible playbooks in order (`01-install-docker`, then `02-mount-das`).
+2. Deploy applications — bring up each stack under `apps/` with Docker Compose.
+
 ## Architecture
 
 The flow from bare host to running apps:
@@ -122,20 +135,21 @@ Run a playbook against the inventory:
 ansible-playbook -i infra/inventory infra/playbooks/01-install-docker.yaml
 ```
 
-## Getting Started
+## Roadmap
 
-**Prerequisites:**
+- [ ] Configure the development VM to mirror the production server.
 
-- A control node with [Ansible](https://docs.ansible.com/) installed.
-- SSH access to the server (Ubuntu Server 24) from the control node.
-- The TerraMaster D2-320 DAS physically connected to the server.
-
-**Bring-up order:**
-
-1. Provision the host — run the Ansible playbooks in order (`01-install-docker`, then `02-mount-das`).
-2. Deploy applications — bring up each stack under `apps/` with Docker Compose.
 
 ## Useful commands
+
+### Bash commands
+
+- Connect to the server via SSH:
+```bash
+ssh maso@192.168.0.3
+```
+
+> Without password: `ssh home-server`
 
 ### Ansible
 
