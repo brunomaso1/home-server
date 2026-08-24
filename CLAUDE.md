@@ -68,6 +68,7 @@ docker compose ps
 docker compose down
 ```
 
-## Documentation conventions
+## Project conventions
 
-Design/planning docs for larger changes live under `docs/superpowers/` (`specs/` for design specs, `plans/` for implementation plans), following the Superpowers `brainstorming` → `writing-plans` workflow. Check there for the rationale behind existing structure before re-deriving it from scratch.
+- Design/planning docs for larger changes live under `docs/superpowers/` (`specs/` for design specs, `plans/` for implementation plans), following the Superpowers `brainstorming` → `writing-plans` workflow. Check there for the rationale behind existing structure before re-deriving it from scratch.
+- For now, this is a greenfield project. Just use the production server as the target host for Ansible playbooks. In the future, a development VM will be added to mirror the production server, and the inventory will be updated accordingly.
