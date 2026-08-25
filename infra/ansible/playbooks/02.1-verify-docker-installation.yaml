@@ -1,0 +1,40 @@
+---
+- name: Verify Docker installation
+  hosts: prod
+  become: true
+
+  tasks:
+    - name: Get Docker version
+      ansible.builtin.command:
+        cmd: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Get Docker Compose version
+      ansible.builtin.command:
+        cmd: docker compose version
+      register: docker_compose_version
+      changed_when: false
+
+    - name: Verify Docker daemon is responding
+      ansible.builtin.command:
+        cmd: docker info
+      changed_when: false
+
+    - name: Gather service facts
+      ansible.builtin.service_facts:
+
+    - name: Verify Docker service is running and enabled
+      ansible.builtin.assert:
+        that:
+          - "'docker.service' in ansible_facts.services"
+          - ansible_facts.services['docker.service'].state == 'running'
+          - ansible_facts.services['docker.service'].status == 'enabled'
+        fail_msg: "Docker service is not installed, running, or enabled."
+        success_msg: "Docker service is running and enabled."
+
+    - name: Show Docker installation information
+      ansible.builtin.debug:
+        msg:
+          - "{{ docker_version.stdout }}"
+          - "{{ docker_compose_version.stdout }}"
