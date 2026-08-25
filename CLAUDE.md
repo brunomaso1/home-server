@@ -10,7 +10,10 @@ This is a **DevOps repository** for a self-hosted home server. There is no appli
 
 Bare host → running apps, in three stages:
 
-1. **Ansible provisions the host** (`infra/ansible/`) — installs Docker Engine and mounts a TerraMaster D2-320 DAS, via numbered playbooks run in sequence (e.g. `01-install-docker`, `02-mount-das`) against `infra/ansible/inventory.yaml`.
+1. **Ansible provisions the host** (`infra/ansible/`) — `site.yaml` imports all numbered playbooks in order; they run against `infra/ansible/inventory.yaml`:
+   - `01-update-system` — apt cache update + dist-upgrade all packages, cleanup, reboot check.
+   - `02-install-docker` — add Docker APT repo, install Docker Engine + Compose plugin, enable service.
+   - `02.1-verify-docker-installation` — assert Docker daemon/service is up; print versions.
 2. **Apps run as Docker Compose stacks**, one directory per app under `apps/` (e.g. `apps/traefik`, `apps/seaweedfs`, `apps/simple-page`), each with its own `docker-compose.yaml`.
 3. **Traefik is the single reverse-proxy entry point** routing to the other app stacks.
 
@@ -51,8 +54,8 @@ ansible-inventory -i ./infra/ansible/inventory.yaml --list
 # Check connectivity
 ansible prod -m ping -i ./infra/ansible/inventory.yaml
 
-# Run a playbook
-ansible-playbook -i infra/ansible/inventory.yaml infra/ansible/playbooks/01-install-docker.yaml
+# Run everything (or a single playbook under infra/ansible/playbooks/)
+ansible-playbook -i infra/ansible/inventory.yaml infra/ansible/site.yaml
 ```
 
 The user is already set up with passwordless sudo, so no `sudo` is needed for Ansible commands.
@@ -72,3 +75,4 @@ docker compose down
 
 - Design/planning docs for larger changes live under `docs/superpowers/` (`specs/` for design specs, `plans/` for implementation plans), following the Superpowers `brainstorming` → `writing-plans` workflow. Check there for the rationale behind existing structure before re-deriving it from scratch.
 - For now, this is a greenfield project. Just use the production server as the target host for Ansible playbooks. In the future, a development VM will be added to mirror the production server, and the inventory will be updated accordingly.
+- When adding or modifying an Ansible playbook, update the playbook list in the Architecture section (stage 1) to match.

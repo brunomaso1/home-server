@@ -16,7 +16,7 @@ Infrastructure and application stacks for a self-hosted home server. A physical 
 
 **Bring-up order:**
 
-1. Provision the host — run the Ansible playbooks in order (`01-install-docker`, then `02-mount-das`).
+1. Provision the host — run all Ansible playbooks at once with `site.yaml` (or individually in numbered order).
 2. Deploy applications — bring up each stack under `apps/` with Docker Compose.
 
 ## Architecture
@@ -72,10 +72,11 @@ feature/* ──▶ dev ──▶ main
 ## Repository structure
 
 ```
-├── infra/            # Ansible — host provisioning (Infrastructure as Code)
-│   ├── playbooks/    #   01-install-docker, 02-mount-das
-│   ├── inventory/    #   hosts and group/host variables
-│   └── ...
+├── infra/            # Infrastructure as Code
+│   └── ansible/      #   Ansible — host provisioning
+│       ├── site.yaml       #   Entry point — imports all playbooks in order
+│       ├── inventory.yaml  #   Hosts and connection variables
+│       └── playbooks/      #   Numbered playbooks (01-update-system, 02-install-docker, ...)
 └── apps/             # One Docker Compose stack per application
     ├── traefik/
     ├── seaweedfs/
@@ -124,16 +125,33 @@ To install Ubuntu Server 26.04 LTS using autoinstall:
 
 ### Ansible
 
-Host provisioning is handled by Ansible playbooks under `infra/playbooks/`, run in sequence:
+Host provisioning is handled by Ansible playbooks under `infra/ansible/playbooks/`, run in numbered order:
 
-- **`01-install-docker`** — installs Docker Engine on the host.
-- **`02-mount-das`** — mounts the TerraMaster D2-320 DAS.
+- `01-update-system` — apt cache update + dist-upgrade all packages, cleanup, reboot check.
+- `02-install-docker` — add the Docker APT repository, install Docker Engine + Compose plugin, enable the service.
+- `02.1-verify-docker-installation` — verify the Docker daemon and service are up; print installed versions.
 
-Run a playbook against the inventory:
+Run everything at once with the parent playbook:
 
 ```bash
-ansible-playbook -i infra/inventory infra/playbooks/01-install-docker.yaml
+ansible-playbook -i infra/ansible/inventory.yaml infra/ansible/site.yaml
 ```
+
+Or run a single playbook against the inventory:
+
+```bash
+ansible-playbook -i infra/ansible/inventory.yaml infra/ansible/playbooks/01-update-system.yaml
+```
+
+Using the debug (print) in a playbook is useful for troubleshooting:
+
+```yaml
+- name: Show stat result
+  ansible.builtin.debug:
+    var: reboot_required_file
+```
+
+> NOTE: Tip for learning: add -v (or -vvv) to the real run to see exactly what the apt module reports as changed.
 
 ## Roadmap
 
@@ -157,47 +175,24 @@ ssh maso@192.168.0.3
 > Important: From Windows, the path to the private key file must be specified in Unix format (e.g., `/mnt/c/Users/maso/.ssh/home_server`), not Windows format (e.g., `C:/Users/maso/.ssh/home_server`).
 > Important: Before running any ansible command, trust the server's SSH fingerprint by connecting to it once with `ssh maso@server_ip` and accepting the fingerprint.
 
-```bash
-# Verify inventory
-ansible-inventory -i ./infra/ansible/inventory.yaml --list
-
-
-# Check connectivity to all inventory hosts
-ansible prod -m ping -i ./infra/ansible/inventory.yaml 
-
-# Run a playbook
-ansible-playbook -i infra/inventory infra/playbooks/01-install-docker.yaml
-ansible-playbook -i infra/inventory infra/playbooks/02-mount-das.yaml
-```
+- Verify the inventory -> `ansible-inventory -i ./infra/ansible/inventory.yaml --list`
+- Check connectivity to all inventory hosts -> `ansible prod -m ping -i ./infra/ansible/inventory.yaml`
+- Run a playbook (dry run) -> `ansible-playbook -i ./infra/ansible/inventory.yaml ./infra/ansible/playbooks/01-update-system.yaml --check`
+- Run a playbook (actual run) -> `ansible-playbook -i ./infra/ansible/inventory.yaml ./infra/ansible/playbooks/01-update-system.yaml`
+- Provision all the server -> `ansible-playbook -i ./infra/ansible/inventory.yaml ./infra/ansible/site.yaml`
 
 ### Docker Compose (per app)
 
-```bash
-# Start a stack in the background (run from the app directory)
-cd apps/traefik && docker compose up -d
-
-# Follow logs
-docker compose logs -f
-
-# Show running services
-docker compose ps
-
-# Stop and remove the stack
-docker compose down
-```
+- Start a stack in the background (run from the app directory) -> `cd apps/traefik && docker compose up -d`
+- Follow logs -> `docker compose logs -f`
+- Show running services -> `docker compose ps`
+- Stop and remove the stack -> `docker compose down`
 
 ### Disk / DAS
 
-```bash
-# List block devices and their mount points
-lsblk
-
-# Show mounted filesystems and free space
-df -h
-
-# Show current mounts
-mount | grep -i das
-```
+- List block devices and their mount points -> `lsblk`
+- Show mounted filesystems and free space -> `df -h`
+- Show current mounts -> `mount | grep -i das`
 
 ## Common issues
 
